@@ -208,6 +208,7 @@
         font-size: 12px;
         height: 100%;
         min-height: 28px;
+        line-height: 0.9;
       }
 
       .temp-save-btn {
@@ -223,6 +224,7 @@
         font-size: 12px;
         height: 100%;
         min-height: 28px;
+        line-height: 0.9;
       }
 
       .qr-btn {
@@ -238,6 +240,14 @@
         font-size: 12px;
         height: 100%;
         min-height: 28px;
+        line-height: 0.9;
+      }
+
+      /* 비활성화된 버튼 스타일 추가 */
+      .qr-btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+        opacity: 0.5;
       }
 
       .qr-modal {
@@ -282,9 +292,9 @@
       }
 
       .compact-cell {
-        padding: 2px;
-        font-size: 12px;
-        border: 1px solid #000;
+        padding: 1px;
+        font-size: 11px;
+        line-height: 0.9;
       }
 
       .age-row {
@@ -321,7 +331,7 @@
         cursor: pointer;
         padding: 2px;
         font-size: 12px;
-        line-height: 1.2;
+        line-height: 1;
         height: auto;
         min-height: 28px;
         white-space: pre-line;
@@ -357,6 +367,7 @@
       /* 배점 자동 줄바꿈 스타일 */
       .range-text {
         display: block;
+        line-height: 0.9;
       }
 
       /* 종목명 열 너비 고정 */
@@ -430,6 +441,7 @@
         font-size: 12px;
         height: 100%;
         min-height: 28px;
+        line-height: 0.9;
       }
 
       .confirm-btn.active {
@@ -474,6 +486,21 @@
       .inactive-td {
         background-color: #f0f0f0 !important; /* 기존 inactive 스타일과 통일 */
         color: #aaa; /* 비활성 텍스트 색상 */
+      }
+
+      .delete-btn {
+        background-color: #f44336;
+        border: none;
+        color: white;
+        font-weight: bold;
+        padding: 2px 8px;
+        text-align: center;
+        font-size: 16px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .delete-btn:hover {
+        background-color: #d32f2f;
       }
     </style>
   </head>
@@ -563,23 +590,9 @@
               </div>
             </td>
             <td>
-              <button id="temp-save-btn" class="temp-save-btn">
-                임시<br />저장
-              </button>
-            </td>
-            <td>
-              <button id="qr-btn" class="qr-btn">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  width="80%"
-                  height="80%"
-                  fill="white"
-                >
-                  <path
-                    d="M3,3h6v6H3V3z M5,5v2h2V5H5z M11,3h2v2h-2V3z M15,3h6v6h-6V3z M17,5v2h2V5H17z M3,11h2v2H3V11z M11,11h2v2h-2V11z M13,13h2v2h-2V13z M15,11h2v2h-2V11z M17,13h2v2h-2V13z M19,15h2v2h-2V15z M3,15h6v6H3V15z M5,17v2h2v-2H5z M11,15h2v2h-2V15z M19,11h2v2h-2V11z M15,15h2v2h-2V15z M15,19h6v2h-6V19z"
-                  />
-                </svg>
+              <!-- 초기 상태에서 비활성화된 저장하기 버튼 -->
+              <button id="qr-btn" class="qr-btn" disabled>
+                <i class="fa fa-download fa-lg" style="color: white"></i>
               </button>
             </td>
             <td>
@@ -587,22 +600,11 @@
                 <i class="fa fa-refresh fa-lg"></i>
               </button>
             </td>
-            <td></td>
             <td class="yellow-bg" style="padding: 2px 5px">
               <div
                 style="font-size: 16px; font-weight: bold; letter-spacing: -1px"
               >
                 총점
-              </div>
-              <div
-                style="
-                  font-size: 13px;
-                  text-align: right;
-                  color: #333;
-                  letter-spacing: -1px;
-                "
-              >
-                (환산점)
               </div>
             </td>
             <td class="light-yellow-bg" id="total-score">
@@ -612,8 +614,17 @@
               >
                 0
               </div>
+            </td>
+            <td class="yellow-bg" style="padding: 2px 5px">
               <div
-                style="font-size: 13px; text-align: right; color: #333"
+                style="font-size: 16px; font-weight: bold; letter-spacing: -1px"
+              >
+                환산점
+              </div>
+            </td>
+            <td class="light-yellow-bg">
+              <div
+                style="font-size: 16px; font-weight: bold"
                 id="conversion-score-value"
               ></div>
             </td>
@@ -2116,6 +2127,7 @@
             selectedGender = "male";
             updateCellsActiveState();
             calculateTotal();
+            autoSaveData(); // 자동 저장 추가
           }
         });
 
@@ -2124,6 +2136,7 @@
             selectedGender = "female";
             updateCellsActiveState();
             calculateTotal();
+            autoSaveData(); // 자동 저장 추가
           }
         });
 
@@ -2151,8 +2164,12 @@
             ageFactor = (age - 31) * 0.8 + 0.8;
           }
 
-          document.getElementById("age-adjustment").textContent =
-            ageFactor.toFixed(1);
+          // 나이 보정 득점 표시 및 배경색 설정
+          const ageAdjustmentEl = document.getElementById("age-adjustment");
+          ageAdjustmentEl.textContent = ageFactor.toFixed(1);
+
+          // 배경색 변경 (선택된 셀과 같은 색상으로)
+          ageAdjustmentEl.style.backgroundColor = "#c8e6c9";
 
           // 총점 업데이트
           calculateTotal();
@@ -2161,10 +2178,15 @@
           document.getElementById("birth-confirm-btn").classList.add("active");
         }
 
-        // 생년월일 필드 변경 시 득점 초기화
+        // 나이 보정 초기화 함수 수정
         function resetAgeAdjustment() {
           document.getElementById("age-display").textContent = "";
-          document.getElementById("age-adjustment").textContent = "";
+
+          // 나이 보정 득점 초기화 및 배경색 제거
+          const ageAdjustmentEl = document.getElementById("age-adjustment");
+          ageAdjustmentEl.textContent = "";
+          ageAdjustmentEl.style.backgroundColor = "";
+
           ageFactor = 0;
           calculateTotal();
 
@@ -2188,77 +2210,99 @@
               // 비활성화 상태면 활성화
               updateAgeAdjustment();
             }
+            // 자동 저장 추가
+            autoSaveData();
           });
 
-        // 초기화 버튼 이벤트
+        // 초기화 버튼 이벤트 수정
         document
           .getElementById("reset-btn")
           .addEventListener("click", function () {
-            // 기록 입력 필드 초기화
-            document.querySelectorAll(".score-input").forEach((input) => {
-              input.value = "";
-            });
+            // 사용자에게 확인 메시지 표시 (필요하다면 이것도 제거 가능)
+            if (
+              confirm(
+                "모든 입력과 저장된 데이터가 삭제됩니다. 계속하시겠습니까?"
+              )
+            ) {
+              // 기록 입력 필드 초기화
+              document.querySelectorAll(".score-input").forEach((input) => {
+                input.value = "";
+              });
 
-            // 모든 점수 초기화
-            for (const category in scores) {
-              scores[category].male = 0;
-              scores[category].female = 0;
-              if (document.getElementById(`${category}-male-score`)) {
-                document.getElementById(`${category}-male-score`).textContent =
-                  "0";
+              // 모든 점수 초기화
+              for (const category in scores) {
+                scores[category].male = 0;
+                scores[category].female = 0;
+
+                // 득점 표시 초기화 (텍스트와 배경색 모두)
+                if (document.getElementById(`${category}-male-score`)) {
+                  const maleScoreEl = document.getElementById(
+                    `${category}-male-score`
+                  );
+                  maleScoreEl.textContent = "0";
+                  maleScoreEl.style.backgroundColor = ""; // 배경색 초기화
+                }
+
+                if (document.getElementById(`${category}-female-score`)) {
+                  const femaleScoreEl = document.getElementById(
+                    `${category}-female-score`
+                  );
+                  femaleScoreEl.textContent = "0";
+                  femaleScoreEl.style.backgroundColor = ""; // 배경색 초기화
+                }
               }
-              if (document.getElementById(`${category}-female-score`)) {
-                document.getElementById(
-                  `${category}-female-score`
-                ).textContent = "0";
+
+              // 선택된 모든 셀 초기화
+              for (const category in selectedCells) {
+                if (selectedCells[category].male) {
+                  selectedCells[category].male.classList.remove("selected");
+                  selectedCells[category].male = null;
+                }
+                if (selectedCells[category].female) {
+                  selectedCells[category].female.classList.remove("selected");
+                  selectedCells[category].female = null;
+                }
               }
+
+              // 생년월일 기본값으로 설정
+              birthYearSelect.value = "";
+
+              // 성별 기본값 설정
+              selectedGender = "male";
+              genderMaleRadio.checked = true;
+              genderFemaleRadio.checked = false;
+
+              // 셀 활성화 상태 업데이트
+              updateCellsActiveState();
+
+              // 나이 보정 초기화
+              resetAgeAdjustment();
+
+              // 나이 보정 배경색 명시적 초기화
+              document.getElementById("age-adjustment").style.backgroundColor =
+                "";
+
+              // 총점 초기화
+              const totalScoreValueElement =
+                document.getElementById("total-score-value");
+              const conversionScoreValueElement = document.getElementById(
+                "conversion-score-value"
+              );
+              const totalScoreContainer =
+                document.getElementById("total-score");
+
+              totalScoreValueElement.textContent = "0";
+              conversionScoreValueElement.textContent = "";
+              totalScoreContainer.classList.add("light-yellow-bg");
+              totalScoreContainer.classList.remove("yellow-bg");
+              totalScoreValueElement.classList.remove("bold-text");
+
+              // localStorage에서 모든 관련 데이터 삭제
+              localStorage.removeItem("fitnessTestState");
             }
-
-            // 선택된 모든 셀 초기화
-            for (const category in selectedCells) {
-              if (selectedCells[category].male) {
-                selectedCells[category].male.classList.remove("selected");
-                selectedCells[category].male = null;
-              }
-              if (selectedCells[category].female) {
-                selectedCells[category].female.classList.remove("selected");
-                selectedCells[category].female = null;
-              }
-            }
-
-            // 생년월일 기본값으로 설정
-            birthYearSelect.value = "1980";
-
-            // 성별 기본값 설정
-            selectedGender = "male";
-            genderMaleRadio.checked = true;
-            genderFemaleRadio.checked = false;
-
-            // 셀 활성화 상태 업데이트
-            updateCellsActiveState();
-
-            // 나이 보정 초기화
-            resetAgeAdjustment();
-
-            // 총점 초기화
-            const totalScoreValueElement =
-              document.getElementById("total-score-value");
-            const conversionScoreValueElement = document.getElementById(
-              "conversion-score-value"
-            );
-            const totalScoreContainer = document.getElementById("total-score");
-
-            totalScoreValueElement.textContent = "0";
-            conversionScoreValueElement.textContent = "";
-            totalScoreContainer.classList.add("light-yellow-bg");
-            totalScoreContainer.classList.remove("yellow-bg");
-            totalScoreValueElement.classList.remove("bold-text");
-
-            // 로컬스토리지에서 임시저장 데이터 삭제
-            localStorage.removeItem("fitnessTestState");
           });
 
-        // 총점 계산 함수
+        // 총점 계산 함수 수정
         function calculateTotal() {
           let subtotal = 0;
           let allScoresEntered = true;
@@ -2294,8 +2338,10 @@
           // 환산점 계산 및 표시 (총점 / 14, 모든 항목이 채워진 경우에만)
           if (allScoresEntered && ageFactor > 0) {
             const conversionScore = Math.round((total / 14) * 100) / 100; // 총점 / 14, 소수점 2자리까지
+
+            // 괄호 제거하고 값만 표시
             conversionScoreValueElement.textContent =
-              "(" + conversionScore.toFixed(2) + ")";
+              conversionScore.toFixed(2);
 
             totalScoreContainer.classList.remove("light-yellow-bg");
             totalScoreContainer.classList.add("yellow-bg");
@@ -2307,6 +2353,12 @@
             totalScoreContainer.classList.remove("yellow-bg");
             totalScoreValueElement.classList.remove("bold-text");
           }
+
+          // 환산점 업데이트
+          updateConversionScore();
+
+          // 명시적으로 저장 버튼 상태 체크 호출 (이중 체크)
+          checkSaveButtonState();
         }
 
         // 점수 셀 클릭 이벤트 처리
@@ -2321,14 +2373,18 @@
               return;
             }
 
+            // 득점 표시 셀 찾기
+            const scoreDisplayCell = document.getElementById(
+              `${category}-${gender}-score`
+            );
+
             // 이미 선택된 셀인 경우 선택 해제
             if (selectedCells[category][gender] === this) {
               this.classList.remove("selected");
               selectedCells[category][gender] = null;
               scores[category][gender] = 0;
-              document.getElementById(
-                `${category}-${gender}-score`
-              ).textContent = "0";
+              scoreDisplayCell.textContent = "0";
+              scoreDisplayCell.style.backgroundColor = ""; // 배경색 초기화
             } else {
               // 이전에 선택된 셀이 있으면 선택 해제
               if (selectedCells[category][gender]) {
@@ -2339,13 +2395,18 @@
               this.classList.add("selected");
               selectedCells[category][gender] = this;
               scores[category][gender] = score;
-              document.getElementById(
-                `${category}-${gender}-score`
-              ).textContent = score;
+              scoreDisplayCell.textContent = score;
+
+              // 우측 득점 셀 배경색을 선택된 셀과 동일하게 변경
+              scoreDisplayCell.style.backgroundColor =
+                getComputedStyle(this).backgroundColor;
             }
 
             // 총점 업데이트
             calculateTotal();
+
+            // 변경사항 자동 저장
+            autoSaveData();
           });
         });
 
@@ -2358,35 +2419,123 @@
         // 초기 나이 보정 상태 설정 (버튼 비활성화)
         resetAgeAdjustment();
 
-        // 임시저장 버튼 이벤트
-        document
-          .getElementById("temp-save-btn")
-          .addEventListener("click", function () {
-            // 모든 입력 필드 값 수집
-            const inputValues = {};
-            document.querySelectorAll(".score-input").forEach((input) => {
-              if (input.value.trim() !== "") {
-                inputValues[input.id] = input.value;
-              }
-            });
-
-            // 현재 상태를 localStorage에 저장
-            const savedState = {
-              scores: scores,
-              selectedGender: selectedGender,
-              birthYear: birthYearSelect.value,
-              ageConfirmed: document
-                .getElementById("birth-confirm-btn")
-                .classList.contains("active"),
-              inputValues: inputValues, // 입력 필드 값 추가
-            };
-
-            localStorage.setItem(
-              "fitnessTestState",
-              JSON.stringify(savedState)
-            );
-            alert("현재 입력 상태가 임시저장되었습니다.");
+        // 자동 저장 함수에 나이 보정 배경색도 포함되도록 수정
+        function autoSaveData() {
+          // 입력 필드 값 수집
+          const inputValues = {};
+          document.querySelectorAll(".score-input").forEach((input) => {
+            if (input.value.trim() !== "") {
+              inputValues[input.id] = input.value;
+            }
           });
+
+          // 득점 셀 배경색 정보 수집
+          const scoreDisplayColors = {};
+          document.querySelectorAll(".score-display").forEach((display) => {
+            if (display.style.backgroundColor) {
+              scoreDisplayColors[display.id] = display.style.backgroundColor;
+            }
+          });
+
+          // 나이 보정 배경색 추가
+          const ageAdjustmentEl = document.getElementById("age-adjustment");
+          if (ageAdjustmentEl && ageAdjustmentEl.style.backgroundColor) {
+            scoreDisplayColors["age-adjustment"] =
+              ageAdjustmentEl.style.backgroundColor;
+          }
+
+          // 용도 정보 추가 (안전하게 확인)
+          let usageType = "personal"; // 기본값
+          const usageTypeEl = document.getElementById("usage-type");
+          if (usageTypeEl) {
+            usageType = usageTypeEl.value;
+          }
+
+          // 현재 상태를 localStorage에 저장
+          const savedState = {
+            scores: scores,
+            selectedGender: selectedGender,
+            birthYear: birthYearSelect.value,
+            ageConfirmed: document
+              .getElementById("birth-confirm-btn")
+              .classList.contains("active"),
+            inputValues: inputValues,
+            scoreDisplayColors: scoreDisplayColors,
+            usageType: usageType,
+          };
+
+          localStorage.setItem("fitnessTestState", JSON.stringify(savedState));
+
+          // 디버깅용 콘솔 로그 (나중에 제거 가능)
+          console.log("자동 저장 완료:", new Date().toLocaleTimeString());
+        }
+
+        // 기록 입력 변경 핸들러 수정
+        function handleRecordInputChange(event) {
+          const input = event.target;
+          const inputValue = input.value.trim();
+          const category = input.id.split("-")[0]; // e.g., 'weight' from 'weight-male-input'
+          const gender = input.id.includes("-male-") ? "male" : "female";
+
+          let matchedCell = null;
+          const numericValue = parseFloat(inputValue);
+
+          if (inputValue === "" || isNaN(numericValue)) {
+            // 입력값이 비었거나 숫자가 아니면 현재 선택된 셀 해제
+            if (selectedCells[category] && selectedCells[category][gender]) {
+              selectedCells[category][gender].click(); // 기존 클릭 핸들러로 해제
+            }
+            // 자동 저장
+            autoSaveData();
+            return; // 처리 중단
+          }
+
+          // 해당 카테고리와 성별의 모든 점수 셀 순회
+          const relevantCells = document.querySelectorAll(
+            `.score-cell[data-category="${category}"][data-gender="${gender}"]`
+          );
+
+          relevantCells.forEach((cell) => {
+            const range = parseScoreRange(cell.textContent);
+            if (numericValue >= range.min && numericValue <= range.max) {
+              matchedCell = cell;
+            }
+          });
+
+          // 일치하는 셀을 찾았는지 확인
+          if (matchedCell) {
+            // 현재 선택된 셀과 다른 경우에만 클릭 이벤트 트리거
+            if (
+              !(
+                selectedCells[category] &&
+                selectedCells[category][gender] === matchedCell
+              )
+            ) {
+              matchedCell.click(); // 이미 autoSaveData()가 여기서 호출됨
+            }
+          } else {
+            // 일치하는 셀이 없으면 현재 선택된 셀 해제
+            if (selectedCells[category] && selectedCells[category][gender]) {
+              selectedCells[category][gender].click(); // 이미 autoSaveData()가 여기서 호출됨
+            } else {
+              // 이미 선택된 셀이 없는 경우에는 수동으로 자동 저장 호출
+              autoSaveData();
+            }
+          }
+        }
+
+        // 모든 기록 입력 필드에 이벤트 리스너 재설정
+        const allScoreInputs = document.querySelectorAll(".score-input");
+        allScoreInputs.forEach((input) => {
+          // 이전 이벤트 리스너 제거 (중복 방지)
+          input.removeEventListener("input", handleRecordInputChange);
+          // 새 이벤트 리스너 추가
+          input.addEventListener("input", function (event) {
+            handleRecordInputChange(event);
+            // 자동 저장 명시적 호출
+            autoSaveData();
+          });
+        });
 
         // 페이지 로드 시 저장된 데이터가 있는지 확인
         const savedData = localStorage.getItem("fitnessTestState");
@@ -2452,6 +2601,17 @@
               });
             }
 
+            // 득점 셀 배경색 복원
+            if (savedState.scoreDisplayColors) {
+              for (const displayId in savedState.scoreDisplayColors) {
+                const displayEl = document.getElementById(displayId);
+                if (displayEl) {
+                  displayEl.style.backgroundColor =
+                    savedState.scoreDisplayColors[displayId];
+                }
+              }
+            }
+
             // 입력 필드 값 복원
             if (savedState.inputValues) {
               for (const inputId in savedState.inputValues) {
@@ -2465,6 +2625,47 @@
             // 셀 활성화 상태 및 총점 업데이트
             updateCellsActiveState();
             calculateTotal();
+
+            // 사용 유형 복원
+            if (savedState.usageType) {
+              document.getElementById("usage-type").value =
+                savedState.usageType;
+            }
+
+            // 나이 보정 맨 우측 득점 셀 복원
+            const rightScoreAdjustment = document.getElementById(
+              "right-score-adjustment"
+            );
+            if (rightScoreAdjustment && savedState.rightScoreAdjustment) {
+              rightScoreAdjustment.textContent =
+                savedState.rightScoreAdjustment;
+            }
+
+            // 나이 보정 값 복원
+            const ageAdjustmentEl = document.getElementById("age-adjustment");
+            if (ageAdjustmentEl && savedState.ageAdjustment) {
+              ageAdjustmentEl.textContent = savedState.ageAdjustment;
+            }
+
+            // 나이 보정 배경색 복원
+            if (
+              savedState.scoreDisplayColors &&
+              savedState.scoreDisplayColors["age-adjustment"]
+            ) {
+              ageAdjustmentEl.style.backgroundColor =
+                savedState.scoreDisplayColors["age-adjustment"];
+            }
+
+            // 총점과 환산점 명시적 복원
+            if (savedState.totalScore) {
+              document.getElementById("total-score-value").textContent =
+                savedState.totalScore;
+            }
+
+            if (savedState.conversionScore) {
+              document.getElementById("conversion-score-value").textContent =
+                savedState.conversionScore;
+            }
           } catch (e) {
             console.error("저장된 데이터 복원 중 오류가 발생했습니다.", e);
             // 오류 발생 시에도 기본적으로 버튼 비활성화
@@ -2479,9 +2680,232 @@
         document
           .getElementById("qr-btn")
           .addEventListener("click", function () {
-            const modal = document.getElementById("qr-modal");
-            modal.style.display = "block";
+            saveCurrentDataToTable();
           });
+
+        // 현재 데이터를 표 하단에 저장하는 함수 수정 - 삭제 버튼 추가
+        function saveCurrentDataToTable() {
+          // 현재 순번 계산 (기존 저장 행 개수 + 1)
+          const existingRows =
+            document.querySelectorAll(".saved-data-row").length;
+          const rowNumber = existingRows + 1;
+
+          // 고유 ID 생성
+          const rowId = "export-row-" + new Date().getTime();
+
+          // 현재 데이터 수집
+          const gender =
+            selectedGender === "male"
+              ? "남"
+              : selectedGender === "female"
+              ? "여"
+              : "-";
+          const birthYear = document.getElementById("birth-year").value || "-";
+          const totalScore =
+            document.getElementById("total-score-value").textContent || "0";
+          const conversionScore =
+            document.getElementById("conversion-score-value").textContent ||
+            "-";
+
+          // 측정 항목별 데이터 수집 - 기록/득점 형식으로
+          const categories = [
+            { id: "weight", name: "악력" },
+            { id: "deadlift", name: "배근력" },
+            { id: "situp", name: "앉고허리" },
+            { id: "broadjump", name: "제멀" },
+            { id: "situps", name: "윗몸" },
+            { id: "shuttlerun", name: "오달" },
+          ];
+
+          const categoryValues = {};
+
+          categories.forEach((category) => {
+            const inputValue =
+              document.getElementById(`${category.id}-${selectedGender}-input`)
+                ?.value || "-";
+            const scoreValue =
+              document.getElementById(`${category.id}-${selectedGender}-score`)
+                ?.textContent || "-";
+            categoryValues[category.id] =
+              inputValue !== "-" ? `${inputValue}/${scoreValue}` : "-";
+          });
+
+          // 저장 데이터 섹션이 없으면 생성 - 별도 테이블로 생성
+          if (!document.getElementById("saved-data-table")) {
+            // 기존 테이블 아래에 저장 데이터 테이블 생성
+            const mainTable = document.querySelector("table");
+            const savedTableDiv = document.createElement("div");
+            savedTableDiv.style.marginTop = "20px";
+
+            savedTableDiv.innerHTML = `
+              <table id="saved-data-table" class="main-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th class="gray-bg">순번</th>
+                    <th class="gray-bg">성별</th>
+                    <th class="gray-bg">생년</th>
+                    <th class="gray-bg">악력</th>
+                    <th class="gray-bg">배근력</th>
+                    <th class="gray-bg">앉고허리</th>
+                    <th class="gray-bg">제멀</th>
+                    <th class="gray-bg">윗몸</th>
+                    <th class="gray-bg">오달</th>
+                    <th class="gray-bg">총점</th>
+                    <th class="gray-bg">환산점</th>
+                    <th class="gray-bg">
+                      <button id="export-excel-btn" class="export-btn" title="엑셀로 내보내기">
+                        <i class="fa fa-file-excel-o fa-lg"></i>
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+              
+              <style>
+                .export-btn {
+                  background-color: #4CAF50;
+                  border: none;
+                  color: white;
+                  padding: 5px 8px;
+                  text-align: center;
+                  text-decoration: none;
+                  display: inline-block;
+                  font-size: 14px;
+                  margin: 0;
+                  cursor: pointer;
+                  border-radius: 4px;
+                }
+                .export-btn:hover {
+                  background-color: #45a049;
+                }
+              </style>
+            `;
+
+            // 기존 테이블 아래에 저장 테이블 추가
+            mainTable.parentNode.insertBefore(
+              savedTableDiv,
+              mainTable.nextSibling
+            );
+
+            // 엑셀 내보내기 버튼에 이벤트 리스너 추가
+            document
+              .getElementById("export-excel-btn")
+              .addEventListener("click", exportTableToExcel);
+          }
+
+          // 새 행 생성
+          const tbody = document.querySelector("#saved-data-table tbody");
+          const newRow = document.createElement("tr");
+          newRow.className = "saved-data-row";
+          newRow.id = rowId; // 고유 ID 설정
+
+          // 행 내용 생성 - ID를 기반으로 한 삭제 버튼 추가
+          newRow.innerHTML = `
+            <td class="light-yellow-bg compact-cell">${rowNumber}</td>
+            <td class="light-yellow-bg compact-cell">${gender}</td>
+            <td class="light-yellow-bg compact-cell">${birthYear}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.weight}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.deadlift}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.situp}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.broadjump}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.situps}</td>
+            <td class="light-yellow-bg compact-cell">${categoryValues.shuttlerun}</td>
+            <td class="light-yellow-bg compact-cell">${totalScore}</td>
+            <td class="light-yellow-bg compact-cell">${conversionScore}</td>
+            <td class="light-yellow-bg compact-cell">
+              <button class="delete-btn" onclick="deleteExportRow('${rowId}')">×</button>
+            </td>
+          `;
+
+          // 행 추가
+          tbody.appendChild(newRow);
+
+          // 알림 표시
+          alert("현재 데이터가 저장되었습니다.");
+        }
+
+        // 테이블을 Excel로 내보내는 함수
+        function exportTableToExcel() {
+          const table = document.getElementById("saved-data-table");
+          const rows = table.querySelectorAll("tr");
+
+          // CSV 형식으로 변경 (Excel에서 더 잘 인식됨)
+          let csvContent = "\uFEFF"; // UTF-8 BOM 추가 (한글 지원)
+
+          // 제목 행 추가
+          csvContent += "내보내기\r\n\r\n";
+
+          // 헤더 행 처리 (버튼 셀 제외)
+          const headerRow = rows[0];
+          const headerCells = headerRow.querySelectorAll("th");
+          let headerValues = [];
+
+          for (let i = 0; i < headerCells.length - 1; i++) {
+            // 마지막 버튼 셀 제외
+            let headerText = headerCells[i].textContent;
+            // 헤더에 쉼표가 있으면 따옴표로 감싸기
+            if (headerText.includes(",")) {
+              headerText = `"${headerText}"`;
+            }
+            headerValues.push(headerText);
+          }
+
+          csvContent += headerValues.join(",") + "\r\n";
+
+          // 데이터 행 처리
+          for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].querySelectorAll("td");
+            let rowValues = [];
+
+            for (let j = 0; j < cells.length - 1; j++) {
+              // 마지막 빈 셀 제외
+              let cellValue = cells[j].textContent;
+
+              // 슬래시(/)가 포함된 경우 "^"로 변경
+              if (cellValue.includes("/")) {
+                // "/"를 "^"로 변환하고 앞뒤 공백 추가
+                cellValue = cellValue.replace(/(\d+)\s*\/\s*(\d+)/g, "$1^$2");
+              }
+
+              // 쉼표, 따옴표, 줄바꿈 등이 있으면 따옴표로 감싸기
+              if (
+                cellValue.includes(",") ||
+                cellValue.includes('"') ||
+                cellValue.includes("\n")
+              ) {
+                cellValue = `"${cellValue.replace(/"/g, '""')}"`;
+              }
+
+              rowValues.push(cellValue);
+            }
+
+            csvContent += rowValues.join(",") + "\r\n";
+          }
+
+          // CSV 파일 생성 (Blob 사용)
+          const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+
+          // 다운로드 링크 생성 및 클릭
+          const link = document.createElement("a");
+          link.setAttribute("href", url);
+          link.setAttribute(
+            "download",
+            `체력측정결과_${new Date().toLocaleDateString()}.csv`
+          );
+          document.body.appendChild(link);
+          link.click();
+
+          // 메모리 정리
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 100);
+        }
 
         // 모달 닫기
         document
@@ -2526,61 +2950,250 @@
           return { min, max };
         }
 
-        // 기록 입력 변경 핸들러
-        function handleRecordInputChange(event) {
-          const input = event.target;
-          const inputValue = input.value.trim();
-          const category = input.id.split("-")[0]; // e.g., 'weight' from 'weight-male-input'
-          const gender = input.id.includes("-male-") ? "male" : "female";
+        // 드롭다운 상태 저장/불러오기 함수 추가
+        document
+          .getElementById("usage-type")
+          .addEventListener("change", function () {
+            // 상태 저장
+            localStorage.setItem("fitnessTestUsageType", this.value);
 
-          let matchedCell = null;
-          const numericValue = parseFloat(inputValue);
-
-          if (inputValue === "" || isNaN(numericValue)) {
-            // 입력값이 비었거나 숫자가 아니면 현재 선택된 셀 해제
-            if (selectedCells[category] && selectedCells[category][gender]) {
-              selectedCells[category][gender].click(); // 기존 클릭 핸들러로 해제
-            }
-            return; // 처리 중단
-          }
-
-          // 해당 카테고리와 성별의 모든 점수 셀 순회
-          const relevantCells = document.querySelectorAll(
-            `.score-cell[data-category="${category}"][data-gender="${gender}"]`
-          );
-
-          relevantCells.forEach((cell) => {
-            const range = parseScoreRange(cell.textContent);
-            if (numericValue >= range.min && numericValue <= range.max) {
-              matchedCell = cell;
-            }
+            // 자동 저장 함수 호출 (기존 상태 저장에 용도 정보 추가)
+            autoSaveData();
           });
 
-          // 일치하는 셀을 찾았는지 확인
-          if (matchedCell) {
-            // 현재 선택된 셀과 다른 경우에만 클릭 이벤트 트리거
-            if (
-              !(
-                selectedCells[category] &&
-                selectedCells[category][gender] === matchedCell
-              )
-            ) {
-              matchedCell.click();
-            }
+        // 페이지 로드 시 저장된 용도 정보 불러오기
+        window.addEventListener("DOMContentLoaded", function () {
+          // 저장된 사용 유형 불러오기
+          const savedUsageType = localStorage.getItem("fitnessTestUsageType");
+          if (savedUsageType) {
+            document.getElementById("usage-type").value = savedUsageType;
+          }
+
+          // 기존 코드 ...
+        });
+
+        // 문서 로드 시 버튼 초기화
+        document.addEventListener("DOMContentLoaded", function () {
+          // 저장 버튼 비활성화
+          document.getElementById("qr-btn").disabled = true;
+
+          // 환산점이 변경될 때마다 저장 버튼 활성화 상태 체크
+          checkSaveButtonState();
+        });
+
+        // 저장 버튼 활성화 상태를 체크하는 함수
+        function checkSaveButtonState() {
+          const conversionScoreValue = document.getElementById(
+            "conversion-score-value"
+          ).textContent;
+          const saveBtn = document.getElementById("qr-btn");
+
+          // 환산점이 채워져 있으면 버튼 활성화, 아니면 비활성화
+          if (conversionScoreValue && conversionScoreValue.trim() !== "") {
+            saveBtn.disabled = false;
           } else {
-            // 일치하는 셀이 없으면 현재 선택된 셀 해제
-            if (selectedCells[category] && selectedCells[category][gender]) {
-              selectedCells[category][gender].click();
+            saveBtn.disabled = true;
+          }
+        }
+
+        // 환산점이 업데이트될 때마다 저장 버튼 상태 체크
+        function updateConversionScore() {
+          // 기존 환산점 업데이트 코드...
+
+          // 환산점 업데이트 후 저장 버튼 상태 체크
+          checkSaveButtonState();
+        }
+
+        // 내보내기 테이블 데이터를 localStorage에 저장하는 함수
+        function saveExportTableData() {
+          const exportTable = document.getElementById("saved-data-table");
+          if (!exportTable) return;
+
+          const rows = exportTable.querySelectorAll("tbody tr");
+          const exportData = [];
+
+          rows.forEach((row) => {
+            const cells = row.querySelectorAll("td");
+            const rowData = [];
+
+            for (let i = 0; i < cells.length - 1; i++) {
+              // 마지막 빈 셀 제외
+              rowData.push(cells[i].textContent);
+            }
+
+            exportData.push(rowData);
+          });
+
+          // localStorage에 저장
+          localStorage.setItem("exportTableData", JSON.stringify(exportData));
+        }
+
+        // 저장된 내보내기 테이블 데이터를 복원하는 함수
+        function restoreExportTableData() {
+          const savedData = localStorage.getItem("exportTableData");
+          if (!savedData) return;
+
+          try {
+            const exportData = JSON.parse(savedData);
+
+            // 내보내기 테이블이 없으면 생성
+            if (!document.getElementById("saved-data-table")) {
+              createExportTable();
+            }
+
+            const tbody = document.querySelector("#saved-data-table tbody");
+
+            // 데이터 행 생성 및 추가
+            exportData.forEach((rowData, index) => {
+              const newRow = document.createElement("tr");
+              newRow.className = "saved-data-row";
+
+              let cellsHtml = "";
+
+              rowData.forEach((cellValue) => {
+                cellsHtml += `<td class="light-yellow-bg compact-cell">${cellValue}</td>`;
+              });
+
+              // 마지막 빈 셀 추가
+              cellsHtml += `<td class="light-yellow-bg compact-cell"></td>`;
+
+              newRow.innerHTML = cellsHtml;
+              tbody.appendChild(newRow);
+            });
+          } catch (e) {
+            console.error("내보내기 테이블 데이터 복원 중 오류 발생:", e);
+          }
+        }
+
+        // 내보내기 테이블 생성 함수 수정 - 삭제 버튼 추가
+        function createExportTable() {
+          const mainTable = document.querySelector("table");
+          const savedTableDiv = document.createElement("div");
+          savedTableDiv.style.marginTop = "20px";
+
+          savedTableDiv.innerHTML = `
+            <div class="export-title">내보내기</div>
+            <table id="saved-data-table" class="main-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th class="gray-bg">순번</th>
+                  <th class="gray-bg">성별</th>
+                  <th class="gray-bg">생년</th>
+                  <th class="gray-bg">악력</th>
+                  <th class="gray-bg">배근력</th>
+                  <th class="gray-bg">앉고허리</th>
+                  <th class="gray-bg">제멀</th>
+                  <th class="gray-bg">윗몸</th>
+                  <th class="gray-bg">오달</th>
+                  <th class="gray-bg">총점</th>
+                  <th class="gray-bg">환산점</th>
+                  <th class="gray-bg">
+                    <button id="export-excel-btn" class="export-btn" title="엑셀로 내보내기">
+                      <i class="fa fa-file-excel-o fa-lg"></i>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            
+            <style>
+              .delete-btn {
+                background-color: #f44336;
+                border: none;
+                color: white;
+                padding: 5px 8px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 14px;
+                margin: 0;
+                cursor: pointer;
+                border-radius: 4px;
+              }
+              .delete-btn:hover {
+                background-color: #d32f2f;
+              }
+            </style>
+          `;
+
+          // 기존 테이블 아래에 저장 테이블 추가
+          mainTable.parentNode.insertBefore(
+            savedTableDiv,
+            mainTable.nextSibling
+          );
+
+          // 엑셀 내보내기 버튼에 이벤트 리스너 추가
+          document
+            .getElementById("export-excel-btn")
+            .addEventListener("click", exportTableToExcel);
+        }
+
+        // 페이지 로드 시 저장된 내보내기 테이블 데이터 복원
+        document.addEventListener("DOMContentLoaded", function () {
+          // 기존 코드...
+
+          // 저장된 내보내기 테이블 데이터 복원
+          restoreExportTableData();
+        });
+
+        // 페이지를 떠날 때 경고창 표시
+        window.addEventListener("beforeunload", function (event) {
+          // 현재 브라우저에서는 대부분 사용자 정의 메시지가 표시되지 않고
+          // 브라우저 기본 메시지가 표시됩니다.
+          const message =
+            "페이지를 떠나면 저장되지 않은 데이터가 손실될 수 있습니다. 정말 페이지를 떠나시겠습니까?";
+          event.returnValue = message; // 표준
+          return message; // 구형 브라우저 지원
+        });
+
+        // 내보내기 행 삭제 함수 - 더 간단한 구현
+        function deleteExportRow(rowId) {
+          if (confirm("이 항목을 삭제하시겠습니까?")) {
+            const row = document.getElementById(rowId);
+            if (row) {
+              row.remove();
+              updateRowNumbers();
+              saveExportTableData();
             }
           }
         }
 
-        // 모든 기록 입력 필드에 이벤트 리스너 추가
-        const allScoreInputs = document.querySelectorAll(".score-input");
-        allScoreInputs.forEach((input) => {
-          input.addEventListener("input", handleRecordInputChange);
-        });
+        // 행 번호 업데이트 함수도 전역 범위에 등록
+        window.updateRowNumbers = function () {
+          const rows = document.querySelectorAll("#saved-data-table tbody tr");
+          rows.forEach((row, index) => {
+            row.querySelector("td:first-child").textContent = index + 1;
+          });
+        };
       });
+
+      // 전역 스코프에 직접 삭제 함수 정의
+      function deleteExportRow(rowId) {
+        if (confirm("이 항목을 삭제하시겠습니까?")) {
+          const row = document.getElementById(rowId);
+          if (row) {
+            row.remove();
+            updateRowNumbers();
+            saveExportTableData();
+          }
+        }
+      }
+
+      // 행 번호 업데이트 함수
+      function updateRowNumbers() {
+        const rows = document.querySelectorAll("#saved-data-table tbody tr");
+        rows.forEach((row, index) => {
+          const numCell = row.querySelector("td:first-child");
+          if (numCell) {
+            numCell.textContent = index + 1;
+          }
+        });
+      }
+
+      // 삭제 함수가 정의되었는지 확인 (디버깅용)
+      console.log("삭제 함수 정의됨:", typeof deleteExportRow === "function");
     </script>
   </body>
 </html>
